@@ -1,0 +1,111 @@
+#Prediction Housing Prices - Ames Housing Dataset - LinearRegression & Ridge
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import train_test_split
+import seaborn as sns
+
+#load Data
+df = pd.read_csv('/Users/donovancotter/Desktop/ML_Detroit/Housing_Prediction_Demo/housing.csv')
+
+#Clean Data
+
+#Removing unneeded columns & rows
+ms_zoning = df['MS Zoning']
+sale_price = df['SalePrice']
+conditions = (ms_zoning != 'RH') & (ms_zoning != 'RL') & (ms_zoning != 'RM') & (ms_zoning != 'RP') & (sale_price > 400000)
+
+columns_to_remove = ['Unnamed: 0', 'Order', 'Alley', 'Misc Feature', 'Misc Val',
+                     'Garage Area', 'Garage Yr Blt', 'Lot Shape', 'Land Contour',
+                     'Land Slope', 'Roof Matl', 'Mas Vnr Type', 'Mas Vnr Area', 'BsmtFin Type 2',
+                     'BsmtFin SF 1', 'Bsmt Unf SF', 'Heating', 'Electrical', 'Low Qual Fin SF',
+                     'Gr Liv Area', 'Bsmt Full Bath', 'Bsmt Half Bath', 'Full Bath', 'Half Bath',
+                     'TotRms AbvGrd', 'Functional', 'Fireplace Qu', 'Garage Finish',
+                     'Garage Qual', 'Wood Deck SF', 'Open Porch SF', 'Enclosed Porch', '3Ssn Porch',
+                     'Screen Porch', 'Mo Sold', 'PID']
+
+df['Bathrooms'] = df['Full Bath'] + df['Half Bath']
+df['PorchSF'] = df['Enclosed Porch'] + df['Open Porch SF']
+
+print(display(df.head()))
+print("Data Shape Before : " + str(df.shape))
+
+df.drop(df[conditions].index)
+df.drop(columns_to_remove, axis=1, inplace=True)
+
+#turn all string values to numerical
+def categorical_features(df):
+    features = list(df.select_dtypes(include=['object']).columns)
+
+    for feature in features:
+        unique_categories = list(df[feature].unique())
+        map_dict = {}
+        for idx, category in enumerate(unique_categories):
+            map_dict[category] = idx + 1
+        df[feature] = df[feature].map(map_dict)
+
+    return df
+
+#normalize the data
+#Columns to ignore when normalizing features
+def normalize(df):
+    to_ignore = ['SalePrice']
+    for column in df.columns:
+        x = df[column].dropna().value_counts().index[0]
+        df = df.fillna(x)
+        if df[column].dtype != 'object' and column not in to_ignore:
+            m = df[column].min()
+            M = df[column].max()
+            Range = M - m
+            df[column] = (df[column] - m) / Range
+    return df
+
+df = normalize(df)
+df = categorical_features(df)
+df = df.dropna()
+
+Y= df["SalePrice"]
+X = df.drop('SalePrice', axis=1)
+print("Data Shape After : " + str(df.shape))
+print(display(X.head()))
+
+#create test & training for X, y
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=0)
+
+#LinearRegression
+#train and predict
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+y_prediction = lr.predict(X_test)
+
+#score
+train_score = lr.score(X_train, y_train)
+test_score = lr.score(X_test, y_test)
+print("Train Score: {:.2f}".format(train_score))
+print("Test Score: {:.2f}\n".format(test_score))
+
+#plot
+y_test_sample = y_test[:100]
+y_prediction_sample = y_prediction[:100]
+# print("test_sample:\n{}.".format(y_test_sample.values))
+# print("y_pred_sample:\n{}.".format(y_prediction_sample))
+
+ax = sns.regplot(y_test_sample, y_prediction_sample)
+plt.ylabel("Predicted Sale Price")
+plt.show()
+
+#Ridge Regression
+alpha_values = [0.01, 0.5, 5]
+
+for alpha in alpha_values:
+    ridge = Ridge(alpha=alpha)
+    ridge.fit(X_train, y_train)
+    print('Score alpha = ' + str(alpha) + '\nTrain: ' + str(ridge.score(X_train, y_train)) +
+          '\n' + 'Test :' + str(ridge.score(X_test, y_test)))
+    ax = sns.regplot(y_test_sample, y_prediction_sample)
+    ax.set_title('Alpha = ' + str(alpha))
+    plt.ylabel("Predicted Sale Price")
+    plt.show()
