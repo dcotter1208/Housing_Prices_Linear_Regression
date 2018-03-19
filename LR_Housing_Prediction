@@ -1,5 +1,14 @@
 #Prediction Housing Prices - Ames Housing Dataset - LinearRegression & Ridge
 
+#1. import neccessary libraries
+#2. Load data from csv located locally
+#3. Clean & Prepare Data
+#4. Perform Linear Regression
+#5. Plot Linear Regression
+#6. Perform Ridge Regression
+#7. Plot Ridge Regression with different alpha values
+
+#1.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,11 +17,10 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 import seaborn as sns
 
-#load Data
+#2
 df = pd.read_csv('/Users/donovancotter/Desktop/ML_Detroit/Housing_Prediction_Demo/housing.csv')
 
-#Clean Data
-
+#3
 #Removing unneeded columns & rows
 ms_zoning = df['MS Zoning']
 sale_price = df['SalePrice']
@@ -75,7 +83,8 @@ print(display(X.head()))
 #create test & training for X, y
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=0)
 
-#LinearRegression
+
+#4 (Linear Regression)
 #train and predict
 lr = LinearRegression()
 lr.fit(X_train, y_train)
@@ -87,7 +96,7 @@ test_score = lr.score(X_test, y_test)
 print("Train Score: {:.2f}".format(train_score))
 print("Test Score: {:.2f}\n".format(test_score))
 
-#plot
+#5
 y_test_sample = y_test[:100]
 y_prediction_sample = y_prediction[:100]
 # print("test_sample:\n{}.".format(y_test_sample.values))
@@ -97,7 +106,7 @@ ax = sns.regplot(y_test_sample, y_prediction_sample)
 plt.ylabel("Predicted Sale Price")
 plt.show()
 
-#Ridge Regression
+#6 (Ridge Regression)
 alpha_values = [0.01, 0.5, 5]
 
 for alpha in alpha_values:
@@ -105,6 +114,7 @@ for alpha in alpha_values:
     ridge.fit(X_train, y_train)
     print('Score alpha = ' + str(alpha) + '\nTrain: ' + str(ridge.score(X_train, y_train)) +
           '\n' + 'Test :' + str(ridge.score(X_test, y_test)))
+#7
     ax = sns.regplot(y_test_sample, y_prediction_sample)
     ax.set_title('Alpha = ' + str(alpha))
     plt.ylabel("Predicted Sale Price")
